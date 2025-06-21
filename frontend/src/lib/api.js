@@ -20,8 +20,18 @@ export const getAuthUser = async () => {
 };
 
 export const completeOnboarding = async (onboardingData) => {
-  const repsonse = await axiosInstance.post("/auth/onboarding", onboardingData);
-  return repsonse.data;
+  const formData = new FormData();
+  for (const key in onboardingData) {
+    if (key === 'profilePic' && onboardingData.profilePic instanceof File) {
+      formData.append('profilePic', onboardingData.profilePic);
+    } else {
+      formData.append(key, onboardingData[key]);
+    }
+  }
+  const response = await axiosInstance.post("/auth/onboarding", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
 };
 
 export const logout = async () => {
@@ -69,3 +79,28 @@ export const getStreamToken = async () => {
   const repsonse = await axiosInstance.get("/chat/token");
   return repsonse.data;
 }
+
+export const markAcceptedRequestSeen = async (id) => {
+  const response = await axiosInstance.patch(`/users/friend-request/${id}/seen`);
+  return response.data;
+};
+
+export const deleteAcceptedRequest = async (id) => {
+  const response = await axiosInstance.delete(`/users/friend-request/${id}`);
+  return response.data;
+};
+
+export const updateProfile = async (profileData) => {
+  const formData = new FormData();
+  for (const key in profileData) {
+    if (key === 'profilePic' && profileData.profilePic instanceof File) {
+      formData.append('profilePic', profileData.profilePic);
+    } else {
+      formData.append(key, profileData[key]);
+    }
+  }
+  const response = await axiosInstance.put("/users/profile", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

@@ -1,20 +1,13 @@
 import { useState } from "react";
 import useAuthUser from "../hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { completeOnboarding } from "../lib/api";
+import { updateProfile } from "../lib/api";
 import toast from "react-hot-toast";
-import {
-  CameraIcon,
-  Loader2,
-  MapPinIcon,
-  ShipWheelIcon,
-  ShuffleIcon,
-} from "lucide-react";
+import { CameraIcon } from "lucide-react";
 import { LANGUAGES } from "../constants/constants-index";
 
-function OnboardingPage() {
-  const { authUser } = useAuthUser();
-
+const ProfilePage = () => {
+  const { authUser, isLoading } = useAuthUser();
   const queryClient = useQueryClient();
 
   const [formState, setFormState] = useState({
@@ -26,28 +19,16 @@ function OnboardingPage() {
     location: authUser?.location || "",
   });
 
-  const { mutate: onboardingMutation, isPending } = useMutation({
-    mutationFn: completeOnboarding,
-    onSuccess: () => {
-      toast.success("Profile onboarded successfully");
+  const { mutate: updateMutation, isPending } = useMutation({
+    mutationFn: updateProfile,
+    onSuccess: (data) => {
+      toast.success("Profile updated successfully");
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
-
     onError: (error) => {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Update failed");
     },
   });
-
-  const handleOnboarding = (e) => {
-    e.preventDefault();
-    onboardingMutation(formState);
-  };
-
-  const handleRandomAvatar = () => {
-    const randomNumber = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://avatar.iran.liara.run/public/${randomNumber}.png`;
-    setFormState({ ...formState, profilePic: randomAvatar });
-  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -56,18 +37,24 @@ function OnboardingPage() {
     }
   };
 
+  const handleChange = (e) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    updateMutation(formState);
+  };
+
+  if (isLoading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+
   return (
     <div className="min-h-screen bg-base-100 flex items-center justify-center p-4">
       <div className="card bg-base-200 w-full max-w-3xl shadow-xl">
         <div className="card-body p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">
-            Complete Your Profile
-          </h1>
-
-          <form onSubmit={handleOnboarding} className="space-y-6">
-            {/* PROFILE PIC CONTAINER */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">Edit Profile</h1>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col items-center justify-center space-y-4">
-              {/* IMAGE PREVIEW */}
               <div className="size-32 rounded-full bg-base-300 overflow-hidden">
                 {formState.profilePic ? (
                   typeof formState.profilePic === 'string' ? (
@@ -89,8 +76,6 @@ function OnboardingPage() {
                   </div>
                 )}
               </div>
-
-              {/* Upload Avatar */}
               <input
                 type="file"
                 accept="image/*"
@@ -98,8 +83,6 @@ function OnboardingPage() {
                 className="file-input file-input-bordered w-full max-w-xs mt-2"
               />
             </div>
-
-            {/* FULL NAME */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Full Name</span>
@@ -108,15 +91,11 @@ function OnboardingPage() {
                 type="text"
                 name="fullName"
                 value={formState.fullName}
-                onChange={(e) =>
-                  setFormState({ ...formState, fullName: e.target.value })
-                }
+                onChange={handleChange}
                 className="input input-bordered w-full"
                 placeholder="Your full name"
               />
             </div>
-
-            {/* BIO */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Bio</span>
@@ -124,17 +103,12 @@ function OnboardingPage() {
               <textarea
                 name="bio"
                 value={formState.bio}
-                onChange={(e) =>
-                  setFormState({ ...formState, bio: e.target.value })
-                }
+                onChange={handleChange}
                 className="textarea textarea-bordered h-24"
                 placeholder="Tell others about yourself and your language learning goals"
               />
             </div>
-
-            {/* LANGUAGES */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* NATIVE LANGUAGE */}
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Native Language</span>
@@ -142,12 +116,7 @@ function OnboardingPage() {
                 <select
                   name="nativeLanguage"
                   value={formState.nativeLanguage}
-                  onChange={(e) =>
-                    setFormState({
-                      ...formState,
-                      nativeLanguage: e.target.value,
-                    })
-                  }
+                  onChange={handleChange}
                   className="select select-bordered w-full"
                 >
                   <option value="">Select your native language</option>
@@ -158,8 +127,6 @@ function OnboardingPage() {
                   ))}
                 </select>
               </div>
-
-              {/* LEARNING LANGUAGE */}
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Learning Language</span>
@@ -167,12 +134,7 @@ function OnboardingPage() {
                 <select
                   name="learningLanguage"
                   value={formState.learningLanguage}
-                  onChange={(e) =>
-                    setFormState({
-                      ...formState,
-                      learningLanguage: e.target.value,
-                    })
-                  }
+                  onChange={handleChange}
                   className="select select-bordered w-full"
                 >
                   <option value="">Select language you're learning</option>
@@ -184,49 +146,27 @@ function OnboardingPage() {
                 </select>
               </div>
             </div>
-
-            {/* LOCATION */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Location</span>
               </label>
-              <div className="relative">
-                <MapPinIcon className="absolute top-1/2 transform -translate-y-1/2 left-3 size-5 text-base-content opacity-70" />
-                <input
-                  type="text"
-                  name="location"
-                  value={formState.location}
-                  onChange={(e) =>
-                    setFormState({ ...formState, location: e.target.value })
-                  }
-                  className="input input-bordered w-full pl-10"
-                  placeholder="City, Country"
-                />
-              </div>
+              <input
+                type="text"
+                name="location"
+                value={formState.location}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="City, Country"
+              />
             </div>
-
-            {/* SUBMIT BUTTON */}
-            <button
-              className="btn btn-primary w-full"
-              disabled={isPending}
-              type="submit"
-            >
-              {!isPending ? (
-                <>
-                  <ShipWheelIcon className="size-5 mr-2" />
-                  Complete Onboarding
-                </>
-              ) : (
-                <>
-                  <Loader2 className="animate-spin size-5 mr-2" />
-                  Onboarding...
-                </>
-              )}
+            <button className="btn btn-primary w-full" disabled={isPending}>
+              {isPending ? "Saving..." : "Save Changes"}
             </button>
           </form>
         </div>
       </div>
     </div>
   );
-}
-export default OnboardingPage;
+};
+
+export default ProfilePage; 

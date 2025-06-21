@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { acceptFriendRequest, getFriendRequests } from "../lib/api";
+import { acceptFriendRequest, getFriendRequests, markAcceptedRequestSeen, deleteAcceptedRequest } from "../lib/api";
 import {
   BellIcon,
   ClockIcon,
@@ -27,6 +27,13 @@ const NotificationsPage = () => {
 
     onError: (error) => {
       toast.error(error.response.data.message);
+    },
+  });
+
+  const { mutate: deleteAcceptedMutation } = useMutation({
+    mutationFn: deleteAcceptedRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     },
   });
 
@@ -140,9 +147,17 @@ const NotificationsPage = () => {
                               Recently
                             </p>
                           </div>
-                          <div className="badge badge-success">
-                            <MessageSquareIcon className="h-3 w-3 mr-1" />
-                            New Friend
+                          <div className="flex flex-col gap-2 items-end">
+                            <button
+                              className="btn btn-outline btn-xs"
+                              onClick={() => deleteAcceptedMutation(notification._id)}
+                            >
+                              Mark as Read
+                            </button>
+                            <div className="badge badge-success mt-2">
+                              <MessageSquareIcon className="h-3 w-3 mr-1" />
+                              New Friend
+                            </div>
                           </div>
                         </div>
                       </div>

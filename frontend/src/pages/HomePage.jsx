@@ -81,7 +81,7 @@ function HomePage() {
         ) : friends.length === 0 ? (
           <NoFriendsFound />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch justify-center">
             {friends.map((friend) => (
               <FriendCard key={friend._id} friend={friend} />
             ))}
@@ -120,7 +120,7 @@ function HomePage() {
             </div>
           ) : (
             // map throw recommended users
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {recommendedUsers.map((user) => {
                 // check if request has been sent
                 const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
@@ -128,83 +128,80 @@ function HomePage() {
                 return (
                   <div
                     key={user._id}
-                    className="card bg-base-200 hover:shadow-lg transition-all duration-300"
+                    className="h-full flex"
                   >
-                    <div className="card-body p-5 space-y-4">
-                      <div className="flex items-center gap-3">
-                        {/* Avatar */}
-                        <div className="avatar size-16 rounded-full">
-                          <img src={user.profilePic} alt={user.fullName} />
+                    <div className="rounded-xl bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200 p-0.5 flex flex-col justify-center items-center w-full h-full">
+                      <div className="flex flex-col items-center p-5 gap-3 w-full h-full justify-center">
+                        {/* Avatar Row */}
+                        <div className="avatar size-16 mb-2 flex-shrink-0">
+                          <img src={user.profilePic} alt={user.fullName} className="rounded-full object-cover w-16 h-16 border border-base-300" />
                         </div>
-
-                        {/* Name and Location */}
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            {user.fullName}
-                          </h3>
-                          {user.location && (
-                            <div className="flex items-center text-xs opacity-70 mt-1">
-                              <MapPinIcon className="size-3 mr-1" />
-                              {user.location}
-                            </div>
-                          )}
+                        {/* Name Row */}
+                        <div className="w-full flex flex-col items-center">
+                          <h3 className="font-semibold text-base text-center text-base-content mb-0 truncate w-full">{user.fullName}</h3>
                         </div>
-                      </div>
-
-                      {/* Languages with flags */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="badge badge-secondary">
-                          {getLanguageFlag(user.nativeLanguage) && (
-                            <img
-                              src={getLanguageFlag(user.nativeLanguage)}
-                              alt={`${user.nativeLanguage} flag`}
-                              className="h-3"
-                            />
-                          )}
-                          Native: {capitialize(user.nativeLanguage)}
-                        </span>
-                        <span className="badge badge-outline">
-                          {getLanguageFlag(user.learningLanguage) && (
-                            <img
-                              src={getLanguageFlag(user.learningLanguage)}
-                              alt={`${user.learningLanguage} flag`}
-                              className="h-3"
-                            />
-                          )}
-                          Learning: {capitialize(user.learningLanguage)}
-                        </span>
-                      </div>
-
-                      {/* Bio */}
-                      {user.bio && (
-                        <p className="text-sm opacity-70">{user.bio}</p>
-                      )}
-
-                      {/* Action button */}
-                      <button
-                        className={`btn w-full mt-2 ${
-                          hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                        } `}
-                        onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
-                      >
-                        {hasRequestBeenSent ? (
-                          <>
-                            <CheckCircleIcon className="size-4 mr-2" />
-                            Request Sent
-                          </>
-                        ) : isPending ? (
-                          <div className="flex items-center gap-2">
-                            <div className="loading loading-spinner loading-sm"></div>
-                            <span>Sending...</span>
+                        {/* Location Row */}
+                        {user.location && (
+                          <div className="flex items-center text-xs opacity-70 mb-0 w-full justify-center">
+                            <MapPinIcon className="size-3 mr-1" />
+                            {user.location}
                           </div>
-                        ) : (
-                          <>
-                            <UserPlus className="size-4 mr-2" /> Send Friend
-                            Request
-                          </>
                         )}
-                      </button>
+                        {/* Languages Row */}
+                        <div className="flex flex-col items-center gap-2 w-full mb-0">
+                          <span className="badge bg-primary text-primary-content badge-outline text-xs flex items-center gap-1 px-2 py-1 border-base-300">
+                            {getLanguageFlag(user.nativeLanguage) && (
+                              <img
+                                src={getLanguageFlag(user.nativeLanguage)}
+                                alt={`${user.nativeLanguage} flag`}
+                                className="h-3 mr-1"
+                              />
+                            )}
+                            Native: {capitialize(user.nativeLanguage)}
+                          </span>
+                          <span className="badge badge-outline text-xs flex items-center gap-1 px-2 py-1 border-base-300">
+                            {getLanguageFlag(user.learningLanguage) && (
+                              <img
+                                src={getLanguageFlag(user.learningLanguage)}
+                                alt={`${user.learningLanguage} flag`}
+                                className="h-3 mr-1"
+                              />
+                            )}
+                            Learning: {capitialize(user.learningLanguage)}
+                          </span>
+                        </div>
+                        {/* Bio Row */}
+                        {user.bio && (
+                          <div className="w-full flex flex-col items-center">
+                            <p className="text-sm opacity-70 text-center mb-0">{user.bio}</p>
+                          </div>
+                        )}
+                        {/* Button Row */}
+                        <div className="w-full flex flex-col items-center">
+                          <button
+                            className={`btn btn-neutral w-full rounded-lg mt-2 hover:shadow-md transition ${hasRequestBeenSent ? "btn-disabled" : ""}`}
+                            onClick={() => sendRequestMutation(user._id)}
+                            disabled={hasRequestBeenSent || isPending}
+                          >
+                            {hasRequestBeenSent ? (
+                              <>
+                                <CheckCircleIcon className="size-4 mr-2" />
+                                Request Sent
+                              </>
+                            ) : isPending ? (
+                              <div className="flex items-center gap-2">
+                                <div className="loading loading-spinner loading-sm"></div>
+                                <span>Sending...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <UserPlus className="size-4 mr-2" /> Send Friend
+                                Request
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

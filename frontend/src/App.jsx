@@ -8,6 +8,8 @@ import OnboardingPage from "./pages/OnboardingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import CallPage from "./pages/CallPage";
 import ChatPage from "./pages/ChatPage";
+import FriendsPage from "./pages/FriendsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 import PageLoader from "./components/PageLoader";
 import useAuthUser from "./hooks/useAuthUser";
@@ -120,6 +122,38 @@ export default function App() {
           element={
             isAuthenticated && isOnboarded ? (
               <CallPage />
+            ) : !isAuthenticated ? (
+              <Navigate to="/login" />
+            ) : (
+              <Navigate to="/onboarding" />
+            )
+          }
+        />
+
+        {/* Friends */}
+        <Route
+          path="/friends"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <FriendsPage />
+              </Layout>
+            ) : !isAuthenticated ? (
+              <Navigate to="/login" />
+            ) : (
+              <Navigate to="/onboarding" />
+            )
+          }
+        />
+
+        {/* Profile */}
+        <Route
+          path="/profile"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ProfilePage />
+              </Layout>
             ) : !isAuthenticated ? (
               <Navigate to="/login" />
             ) : (

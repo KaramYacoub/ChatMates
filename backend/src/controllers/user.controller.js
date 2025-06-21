@@ -1,5 +1,8 @@
 import FriendRequest from "../models/FriendRequest.js";
 import User from "../models/User.js";
+import cloudinary from '../lib/cloudinary.js';
+import streamifier from 'streamifier';
+import upload from '../middlewares/upload.middleware.js';
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -164,5 +167,85 @@ export async function getOutgoingFriendRequests(req, res) {
       error.message
     );
     return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function markAcceptedRequestSeen(req, res) {
+  try {
+    const { id } = req.params;
+    const request = await FriendRequest.findById(id);
+    if (!request || request.status !== "accepted") {
+      return res.status(404).json({ message: "Accepted request not found" });
+    }
+    if (request.sender.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    request.seen = true;
+    await request.save();
+    return res.status(200).json({ message: "Request marked as seen" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function deleteAcceptedRequest(req, res) {
+  try {
+    const { id } = req.params;
+    const request = await FriendRequest.findById(id);
+    if (!request || request.status !== "accepted") {
+      return res.status(404).json({ message: "Accepted request not found" });
+    }
+    if (request.sender.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    await request.deleteOne();
+    return res.status(200).json({ message: "Accepted request deleted" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+async function uploadToCloudinary(buffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'avatars' },
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+}
+
+export async function updateProfile(req, res) {
+  try {
+    let profilePicUrl = req.user.profilePic; // default to existing
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      profilePicUrl = result.secure_url;
+    }
+
+    // Collect updatable fields
+    const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
+
+    // Update user with new profilePicUrl and other fields
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        fullName,
+        bio,
+        nativeLanguage,
+        learningLanguage,
+        location,
+        profilePic: profilePicUrl,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: 'Error uploading avatar' });
   }
 }
