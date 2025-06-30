@@ -108,37 +108,61 @@ export async function login(req, res) {
 }
 
 export async function logout(req, res) {
-  res.clearCookie("jwt");
-  res.status(201).json({ success: true, message: "logout successfully" });
+  try {
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 0,
+    });
+
+    res.status(201).json({ success: true, message: "logout successfully" });
+  } catch (error) {
+    console.error("Error in logout controller:", error.message);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 }
 
 export async function onboard(req, res) {
   try {
     const userId = req.user._id;
-    const { fullName, bio, nativeLanguage, learningLanguage, location, profilePicUrl } = req.body;
+    const {
+      fullName,
+      bio,
+      nativeLanguage,
+      learningLanguage,
+      location,
+      profilePicUrl,
+    } = req.body;
 
     // Log the received data
-    console.log('Received onboarding data:', {
+    console.log("Received onboarding data:", {
       fullName,
       bio,
       nativeLanguage,
       learningLanguage,
       location,
       hasFile: !!req.file,
-      profilePicUrl
+      profilePicUrl,
     });
 
     // Validate all required fields are present and not empty strings
-    const requiredFields = { fullName, bio, nativeLanguage, learningLanguage, location };
+    const requiredFields = {
+      fullName,
+      bio,
+      nativeLanguage,
+      learningLanguage,
+      location,
+    };
     const missingFields = Object.entries(requiredFields)
       .filter(([_, value]) => !value || value.trim().length === 0)
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.log('Missing fields:', missingFields);
+      console.log("Missing fields:", missingFields);
       return res.status(400).json({
         message: "All fields are required",
-        missingFields
+        missingFields,
       });
     }
 
@@ -149,7 +173,7 @@ export async function onboard(req, res) {
       nativeLanguage: nativeLanguage.trim().toLowerCase(),
       learningLanguage: learningLanguage.trim().toLowerCase(),
       location: location.trim(),
-      isOnboarded: true
+      isOnboarded: true,
     };
 
     // Handle profile picture
@@ -170,11 +194,9 @@ export async function onboard(req, res) {
       updateData.profilePic = profilePicUrl;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
@@ -187,7 +209,10 @@ export async function onboard(req, res) {
         image: updatedUser.profilePic,
       });
     } catch (error) {
-      console.log("Error updating Stream user during onboarding:", error.message);
+      console.log(
+        "Error updating Stream user during onboarding:",
+        error.message
+      );
     }
 
     res.status(200).json({ success: true, user: updatedUser });
