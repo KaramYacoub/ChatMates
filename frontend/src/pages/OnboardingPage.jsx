@@ -8,7 +8,6 @@ import {
   Loader2,
   MapPinIcon,
   ShipWheelIcon,
-  ShuffleIcon,
 } from "lucide-react";
 import { LANGUAGES } from "../constants/constants-index";
 
@@ -34,20 +33,69 @@ function OnboardingPage() {
     },
 
     onError: (error) => {
-      toast.error(error.response.data.message);
+      if (error.response?.data?.missingFields) {
+        const missingFields = error.response.data.missingFields.join(", ");
+        toast.error(`Please fill in: ${missingFields}`);
+      } else {
+        toast.error(error.response?.data?.message || "An error occurred");
+      }
     },
   });
 
-  const handleOnboarding = (e) => {
-    e.preventDefault();
-    onboardingMutation(formState);
+  const validateForm = () => {
+    const requiredFields = {
+      fullName: "Full Name",
+      bio: "Bio",
+      nativeLanguage: "Native Language",
+      learningLanguage: "Learning Language",
+      location: "Location"
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key]) => !formState[key]?.trim())
+      .map(([_, label]) => label);
+
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in: ${missingFields.join(", ")}`);
+      return false;
+    }
+
+    // Additional validation to ensure no empty strings or just spaces
+    for (const [key, value] of Object.entries(formState)) {
+      if (key !== 'profilePic' && (!value || value.trim().length === 0)) {
+        toast.error(`${requiredFields[key]} cannot be empty`);
+        return false;
+      }
+    }
+
+    return true;
   };
 
-  const handleRandomAvatar = () => {
-    const randomNumber = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://avatar.iran.liara.run/public/${randomNumber}.png`;
-    setFormState({ ...formState, profilePic: randomAvatar });
+  const handleOnboarding = (e) => {
+    e.preventDefault();
+    
+    // Trim all text fields before submission
+    const trimmedFormState = {
+      ...formState,
+      fullName: formState.fullName?.trim(),
+      bio: formState.bio?.trim(),
+      nativeLanguage: formState.nativeLanguage?.trim(),
+      learningLanguage: formState.learningLanguage?.trim(),
+      location: formState.location?.trim(),
+    };
+
+    if (!validateForm()) return;
+    
+    // Log the form data being sent
+    console.log('Submitting form data:', trimmedFormState);
+    onboardingMutation(trimmedFormState);
   };
+
+  // const handleRandomAvatar = () => {
+  //   const randomNumber = Math.floor(Math.random() * 100) + 1;
+  //   const randomAvatar = `https://avatar.iran.liara.run/public/${randomNumber}.png`;
+  //   setFormState({ ...formState, profilePic: randomAvatar });
+  // };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -102,7 +150,7 @@ function OnboardingPage() {
             {/* FULL NAME */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Full Name</span>
+                <span className="label-text">Full Name *</span>
               </label>
               <input
                 type="text"
@@ -119,7 +167,7 @@ function OnboardingPage() {
             {/* BIO */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Bio</span>
+                <span className="label-text">Bio *</span>
               </label>
               <textarea
                 name="bio"
@@ -137,7 +185,7 @@ function OnboardingPage() {
               {/* NATIVE LANGUAGE */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Native Language</span>
+                  <span className="label-text">Native Language *</span>
                 </label>
                 <select
                   name="nativeLanguage"
@@ -162,7 +210,7 @@ function OnboardingPage() {
               {/* LEARNING LANGUAGE */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Learning Language</span>
+                  <span className="label-text">Learning Language *</span>
                 </label>
                 <select
                   name="learningLanguage"
@@ -188,7 +236,7 @@ function OnboardingPage() {
             {/* LOCATION */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Location</span>
+                <span className="label-text">Location *</span>
               </label>
               <div className="relative">
                 <MapPinIcon className="absolute top-1/2 transform -translate-y-1/2 left-3 size-5 text-base-content opacity-70" />

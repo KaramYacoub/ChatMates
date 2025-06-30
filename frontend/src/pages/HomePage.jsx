@@ -15,6 +15,8 @@ import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
 import toast from "react-hot-toast";
 
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+
 function HomePage() {
   const queryClient = useQueryClient();
   const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
@@ -60,6 +62,13 @@ function HomePage() {
     }
   }, [outgoingFriendReqs]);
 
+  const recommendedUserIds = recommendedUsers.map((user) => user._id);
+  const friendUserIds = friends.map((friend) => friend._id);
+  const onlineStatus = useOnlineStatus([
+    ...recommendedUserIds,
+    ...friendUserIds,
+  ]);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="container mx-auto space-y-10">
@@ -83,7 +92,11 @@ function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch justify-center">
             {friends.map((friend) => (
-              <FriendCard key={friend._id} friend={friend} />
+              <FriendCard
+                key={friend._id}
+                friend={friend}
+                isOnline={onlineStatus[friend._id]}
+              />
             ))}
           </div>
         )}
@@ -126,19 +139,22 @@ function HomePage() {
                 const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
 
                 return (
-                  <div
-                    key={user._id}
-                    className="h-full flex"
-                  >
+                  <div key={user._id} className="h-full flex">
                     <div className="rounded-xl bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200 p-0.5 flex flex-col justify-center items-center w-full h-full">
                       <div className="flex flex-col items-center p-5 gap-3 w-full h-full justify-center">
                         {/* Avatar Row */}
                         <div className="avatar size-16 mb-2 flex-shrink-0">
-                          <img src={user.profilePic} alt={user.fullName} className="rounded-full object-cover w-16 h-16 border border-base-300" />
+                          <img
+                            src={user.profilePic}
+                            alt={user.fullName}
+                            className="rounded-full object-cover w-16 h-16 border border-base-300"
+                          />
                         </div>
                         {/* Name Row */}
                         <div className="w-full flex flex-col items-center">
-                          <h3 className="font-semibold text-base text-center text-base-content mb-0 truncate w-full">{user.fullName}</h3>
+                          <h3 className="font-semibold text-base text-center text-base-content mb-0 truncate w-full">
+                            {user.fullName}
+                          </h3>
                         </div>
                         {/* Location Row */}
                         {user.location && (
@@ -173,13 +189,17 @@ function HomePage() {
                         {/* Bio Row */}
                         {user.bio && (
                           <div className="w-full flex flex-col items-center">
-                            <p className="text-sm opacity-70 text-center mb-0">{user.bio}</p>
+                            <p className="text-sm opacity-70 text-center mb-0">
+                              {user.bio}
+                            </p>
                           </div>
                         )}
                         {/* Button Row */}
                         <div className="w-full flex flex-col items-center">
                           <button
-                            className={`btn btn-neutral w-full rounded-lg mt-2 hover:shadow-md transition ${hasRequestBeenSent ? "btn-disabled" : ""}`}
+                            className={`btn btn-neutral w-full rounded-lg mt-2 hover:shadow-md transition ${
+                              hasRequestBeenSent ? "btn-disabled" : ""
+                            }`}
                             onClick={() => sendRequestMutation(user._id)}
                             disabled={hasRequestBeenSent || isPending}
                           >

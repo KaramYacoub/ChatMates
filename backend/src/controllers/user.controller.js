@@ -220,32 +220,53 @@ async function uploadToCloudinary(buffer) {
 
 export async function updateProfile(req, res) {
   try {
+    console.log('Update profile request:', {
+      body: req.body,
+      file: req.file ? 'File present' : 'No file',
+      currentPic: req.user.profilePic
+    });
+
     let profilePicUrl = req.user.profilePic; // default to existing
 
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer);
-      profilePicUrl = result.secure_url;
+      try {
+        const result = await uploadToCloudinary(req.file.buffer);
+        profilePicUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+      }
+    } else if (req.body.profilePicUrl) {
+      // If a URL was provided in the form data, use that
+      profilePicUrl = req.body.profilePicUrl;
     }
 
     // Collect updatable fields
     const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
 
-    // Update user with new profilePicUrl and other fields
+    // Create update object with only provided fields
+    const updateData = {};
+    if (fullName) updateData.fullName = fullName;
+    if (bio) updateData.bio = bio;
+    if (nativeLanguage) updateData.nativeLanguage = nativeLanguage;
+    if (learningLanguage) updateData.learningLanguage = learningLanguage;
+    if (location) updateData.location = location;
+    if (profilePicUrl) updateData.profilePic = profilePicUrl;
+
+    // Update user with new data
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      {
-        fullName,
-        bio,
-        nativeLanguage,
-        learningLanguage,
-        location,
-        profilePic: profilePicUrl,
-      },
+      updateData,
       { new: true }
     );
 
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
-    res.status(500).json({ message: 'Error uploading avatar' });
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 }

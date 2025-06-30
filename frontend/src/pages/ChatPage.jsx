@@ -23,13 +23,9 @@ const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
 const CustomChatHeader = ({ channel, onVideoCall }) => {
   const members = Object.values(channel.state.members || {});
-  const currentUserId = channel?.client?.user?.id;
-  let otherUser = null;
-  if (currentUserId) {
-    otherUser = members.find(
-      (m) => m.user && m.user.id !== currentUserId
-    )?.user;
-  }
+
+  // Fallback to the first member if currentUserId isn't available
+  const otherUser = members[1]?.user || members[0]?.user;
 
   return (
     <div className="flex items-center justify-between bg-green-100 px-4 py-2 border-b border-green-200">
@@ -46,7 +42,9 @@ const CustomChatHeader = ({ channel, onVideoCall }) => {
           </div>
         )}
         <div>
-          <div className="font-semibold text-base text-green-900">{otherUser?.name || "User"}</div>
+          <div className="font-semibold text-base text-green-900">
+            {otherUser?.name || "User"}
+          </div>
           <div className="text-xs text-green-700">Online</div>
         </div>
       </div>

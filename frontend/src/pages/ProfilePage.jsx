@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useAuthUser from "../hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateProfile } from "../lib/api";
 import toast from "react-hot-toast";
-import { CameraIcon } from "lucide-react";
+import { CameraIcon, Loader2 } from "lucide-react";
 import { LANGUAGES } from "../constants/constants-index";
 
 const ProfilePage = () => {
@@ -11,13 +11,27 @@ const ProfilePage = () => {
   const queryClient = useQueryClient();
 
   const [formState, setFormState] = useState({
-    fullName: authUser?.fullName || "",
-    bio: authUser?.bio || "",
-    nativeLanguage: authUser?.nativeLanguage || "",
-    learningLanguage: authUser?.learningLanguage || "",
-    profilePic: authUser?.profilePic || "",
-    location: authUser?.location || "",
+    fullName: "",
+    bio: "",
+    nativeLanguage: "",
+    learningLanguage: "",
+    profilePic: "",
+    location: "",
   });
+
+  // Update form state when authUser changes
+  useEffect(() => {
+    if (authUser) {
+      setFormState({
+        fullName: authUser.fullName || "",
+        bio: authUser.bio || "",
+        nativeLanguage: authUser.nativeLanguage || "",
+        learningLanguage: authUser.learningLanguage || "",
+        profilePic: authUser.profilePic || "",
+        location: authUser.location || "",
+      });
+    }
+  }, [authUser]);
 
   const { mutate: updateMutation, isPending } = useMutation({
     mutationFn: updateProfile,
@@ -26,6 +40,7 @@ const ProfilePage = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: (error) => {
+      console.error('Profile update error:', error);
       toast.error(error.response?.data?.message || "Update failed");
     },
   });
@@ -33,6 +48,11 @@ const ProfilePage = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
       setFormState({ ...formState, profilePic: file });
     }
   };
@@ -43,10 +63,26 @@ const ProfilePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateMutation(formState);
+    
+    // Create form data with all fields
+    const updatedData = {
+      ...formState,
+      // If profilePic is a string (URL) and hasn't changed from authUser, don't send it
+      profilePic: typeof formState.profilePic === 'string' && formState.profilePic === authUser?.profilePic
+        ? undefined
+        : formState.profilePic
+    };
+
+    updateMutation(updatedData);
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <Loader2 className="size-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-base-100 flex items-center justify-center p-4">
@@ -160,7 +196,14 @@ const ProfilePage = () => {
               />
             </div>
             <button className="btn btn-primary w-full" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Changes"}
+              {isPending ? (
+                <>
+                  <Loader2 className="size-5 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </button>
           </form>
         </div>

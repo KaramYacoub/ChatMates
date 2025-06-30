@@ -21,17 +21,34 @@ export const getAuthUser = async () => {
 
 export const completeOnboarding = async (onboardingData) => {
   const formData = new FormData();
-  for (const key in onboardingData) {
-    if (key === 'profilePic' && onboardingData.profilePic instanceof File) {
+
+  // Add all text fields
+  formData.append('fullName', onboardingData.fullName?.trim() || '');
+  formData.append('bio', onboardingData.bio?.trim() || '');
+  formData.append('nativeLanguage', onboardingData.nativeLanguage?.trim() || '');
+  formData.append('learningLanguage', onboardingData.learningLanguage?.trim() || '');
+  formData.append('location', onboardingData.location?.trim() || '');
+
+  // Handle profile picture
+  if (onboardingData.profilePic) {
+    if (onboardingData.profilePic instanceof File) {
       formData.append('profilePic', onboardingData.profilePic);
-    } else {
-      formData.append(key, onboardingData[key]);
+    } else if (typeof onboardingData.profilePic === 'string') {
+      formData.append('profilePicUrl', onboardingData.profilePic);
     }
   }
-  const response = await axiosInstance.post("/auth/onboarding", formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data;
+
+  try {
+    const response = await axiosInstance.post("/auth/onboarding", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Onboarding error:', error.response?.data);
+    throw error;
+  }
 };
 
 export const logout = async () => {
@@ -54,7 +71,6 @@ export const getOutgoingFriendReqs = async () => {
   return repsonse.data;
 };
 
-
 export const getFriendRequests = async () => {
   const repsonse = await axiosInstance.get("/users/friend-request");
   return repsonse.data;
@@ -70,15 +86,10 @@ export const acceptFriendRequest = async (userId) => {
   return repsonse.data;
 };
 
-// export const rejectFriendRequest = async (userId) => {
-//   const repsonse = await axiosInstance.put(`/users/friend-request/${userId}/reject`);
-//   return repsonse.data;
-// };
-
 export const getStreamToken = async () => {
   const repsonse = await axiosInstance.get("/chat/token");
   return repsonse.data;
-}
+};
 
 export const markAcceptedRequestSeen = async (id) => {
   const response = await axiosInstance.patch(`/users/friend-request/${id}/seen`);
@@ -92,15 +103,32 @@ export const deleteAcceptedRequest = async (id) => {
 
 export const updateProfile = async (profileData) => {
   const formData = new FormData();
-  for (const key in profileData) {
-    if (key === 'profilePic' && profileData.profilePic instanceof File) {
+
+  // Add all text fields
+  formData.append('fullName', profileData.fullName?.trim() || '');
+  formData.append('bio', profileData.bio?.trim() || '');
+  formData.append('nativeLanguage', profileData.nativeLanguage?.trim() || '');
+  formData.append('learningLanguage', profileData.learningLanguage?.trim() || '');
+  formData.append('location', profileData.location?.trim() || '');
+
+  // Handle profile picture
+  if (profileData.profilePic) {
+    if (profileData.profilePic instanceof File) {
       formData.append('profilePic', profileData.profilePic);
-    } else {
-      formData.append(key, profileData[key]);
+    } else if (typeof profileData.profilePic === 'string') {
+      formData.append('profilePicUrl', profileData.profilePic);
     }
   }
-  const response = await axiosInstance.put("/users/profile", formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data;
+
+  try {
+    const response = await axiosInstance.put("/users/profile", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Profile update error:', error.response?.data);
+    throw error;
+  }
 };
