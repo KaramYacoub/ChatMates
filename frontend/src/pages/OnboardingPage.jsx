@@ -3,12 +3,7 @@ import useAuthUser from "../hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { completeOnboarding } from "../lib/api";
 import toast from "react-hot-toast";
-import {
-  CameraIcon,
-  Loader2,
-  MapPinIcon,
-  ShipWheelIcon,
-} from "lucide-react";
+import { CameraIcon, Loader2, MapPinIcon, ShipWheelIcon } from "lucide-react";
 import { LANGUAGES } from "../constants/constants-index";
 
 function OnboardingPage() {
@@ -48,12 +43,12 @@ function OnboardingPage() {
       bio: "Bio",
       nativeLanguage: "Native Language",
       learningLanguage: "Learning Language",
-      location: "Location"
+      location: "Location",
     };
 
     const missingFields = Object.entries(requiredFields)
       .filter(([key]) => !formState[key]?.trim())
-      .map(([_, label]) => label);
+      .map(([, label]) => label);
 
     if (missingFields.length > 0) {
       toast.error(`Please fill in: ${missingFields.join(", ")}`);
@@ -62,7 +57,7 @@ function OnboardingPage() {
 
     // Additional validation to ensure no empty strings or just spaces
     for (const [key, value] of Object.entries(formState)) {
-      if (key !== 'profilePic' && (!value || value.trim().length === 0)) {
+      if (key !== "profilePic" && (!value || value.trim().length === 0)) {
         toast.error(`${requiredFields[key]} cannot be empty`);
         return false;
       }
@@ -73,7 +68,7 @@ function OnboardingPage() {
 
   const handleOnboarding = (e) => {
     e.preventDefault();
-    
+
     // Trim all text fields before submission
     const trimmedFormState = {
       ...formState,
@@ -85,9 +80,6 @@ function OnboardingPage() {
     };
 
     if (!validateForm()) return;
-    
-    // Log the form data being sent
-    console.log('Submitting form data:', trimmedFormState);
     onboardingMutation(trimmedFormState);
   };
 
@@ -118,7 +110,7 @@ function OnboardingPage() {
               {/* IMAGE PREVIEW */}
               <div className="size-32 rounded-full bg-base-300 overflow-hidden">
                 {formState.profilePic ? (
-                  typeof formState.profilePic === 'string' ? (
+                  typeof formState.profilePic === "string" ? (
                     <img
                       src={formState.profilePic}
                       alt="Profile Preview"

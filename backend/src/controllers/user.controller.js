@@ -1,8 +1,5 @@
 import FriendRequest from "../models/FriendRequest.js";
 import User from "../models/User.js";
-import cloudinary from '../lib/cloudinary.js';
-import streamifier from 'streamifier';
-import upload from '../middlewares/upload.middleware.js';
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -205,46 +202,19 @@ export async function deleteAcceptedRequest(req, res) {
   }
 }
 
-async function uploadToCloudinary(buffer) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'avatars' },
-      (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
-      }
-    );
-    streamifier.createReadStream(buffer).pipe(stream);
-  });
-}
-
 export async function updateProfile(req, res) {
   try {
-    console.log('Update profile request:', {
-      body: req.body,
-      file: req.file ? 'File present' : 'No file',
-      currentPic: req.user.profilePic
-    });
-
     let profilePicUrl = req.user.profilePic; // default to existing
 
-    if (req.file) {
-      try {
-        const result = await uploadToCloudinary(req.file.buffer);
-        profilePicUrl = result.secure_url;
-      } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
-        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
-      }
+    if (req.file && req.file.path) {
+      profilePicUrl = req.file.path;
     } else if (req.body.profilePicUrl) {
-      // If a URL was provided in the form data, use that
       profilePicUrl = req.body.profilePicUrl;
     }
 
-    // Collect updatable fields
-    const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
+    const { fullName, bio, nativeLanguage, learningLanguage, location } =
+      req.body;
 
-    // Create update object with only provided fields
     const updateData = {};
     if (fullName) updateData.fullName = fullName;
     if (bio) updateData.bio = bio;
@@ -253,20 +223,17 @@ export async function updateProfile(req, res) {
     if (location) updateData.location = location;
     if (profilePicUrl) updateData.profilePic = profilePicUrl;
 
-    // Update user with new data
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      updateData,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+    });
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    console.error("Profile update error:", error);
+    res.status(500).json({ message: "Error updating profile" });
   }
 }

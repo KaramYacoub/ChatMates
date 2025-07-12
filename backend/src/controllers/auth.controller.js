@@ -47,7 +47,7 @@ export async function signup(req, res) {
         image: newUser.profilePic || "",
       });
     } catch (error) {
-      console.log("Error upserting Stream user: ", error.message);
+      console.error("Error upserting Stream user: ", error.message);
     }
 
     const token = jwt.sign(
@@ -135,17 +135,6 @@ export async function onboard(req, res) {
       profilePicUrl,
     } = req.body;
 
-    // Log the received data
-    console.log("Received onboarding data:", {
-      fullName,
-      bio,
-      nativeLanguage,
-      learningLanguage,
-      location,
-      hasFile: !!req.file,
-      profilePicUrl,
-    });
-
     // Validate all required fields are present and not empty strings
     const requiredFields = {
       fullName,
@@ -159,7 +148,6 @@ export async function onboard(req, res) {
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.log("Missing fields:", missingFields);
       return res.status(400).json({
         message: "All fields are required",
         missingFields,
@@ -180,14 +168,12 @@ export async function onboard(req, res) {
     if (req.file) {
       // If a new file was uploaded, process it with cloudinary
       try {
-        const b64 = Buffer.from(req.file.buffer).toString("base64");
-        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-        const cldRes = await cloudinary.uploader.upload(dataURI, {
+        const cldRes = await cloudinary.uploader.upload(req.file.path, {
           resource_type: "auto",
         });
         updateData.profilePic = cldRes.secure_url;
       } catch (error) {
-        console.log("Error uploading to cloudinary:", error.message);
+        console.error("Error uploading to cloudinary:", error.message);
       }
     } else if (profilePicUrl) {
       // If no new file but a URL was provided, use that
@@ -209,7 +195,7 @@ export async function onboard(req, res) {
         image: updatedUser.profilePic,
       });
     } catch (error) {
-      console.log(
+      console.error(
         "Error updating Stream user during onboarding:",
         error.message
       );

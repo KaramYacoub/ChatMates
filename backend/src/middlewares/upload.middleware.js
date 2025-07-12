@@ -1,6 +1,14 @@
-import multer from 'multer';
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../lib/cloudinary.js";
 
-const storage = multer.memoryStorage(); // Store file in memory for direct upload to Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "avatars",
+    allowed_formats: ["jpg", "png", "jpeg"],
+  },
+});
 
 const upload = multer({ storage });
 
