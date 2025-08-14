@@ -35,7 +35,7 @@ const ProfilePage = () => {
 
   const { mutate: updateMutation, isPending } = useMutation({
     mutationFn: updateProfile,
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Profile updated successfully");
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { getLanguageFlag } from "../lib/utils";
 
-function FriendCard({ friend, isOnline }) {
+function FriendCard({ friend }) {
   const nativeFlagUrl = getLanguageFlag(friend.nativeLanguage);
   const learningFlagUrl = getLanguageFlag(friend.learningLanguage);
 
@@ -13,11 +13,6 @@ function FriendCard({ friend, isOnline }) {
             src={friend.profilePic}
             alt={friend.fullName}
             className="rounded-full object-cover w-16 h-16 border border-base-300"
-          />
-          <span
-            className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${
-              isOnline ? "bg-green-500" : "bg-gray-400"
-            } border-white`}
           />
         </div>
         <h3 className="font-semibold text-base text-center text-base-content mb-1 truncate w-full">

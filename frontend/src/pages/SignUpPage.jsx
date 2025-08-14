@@ -4,12 +4,11 @@ import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { signup } from "../lib/api";
 
-
 function SignUpPage() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [signupData, setSignupData] = useState({
     fullName: "",
-    enail: "",
+    email: "",
     password: "",
   });
 
